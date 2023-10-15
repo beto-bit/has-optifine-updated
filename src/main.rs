@@ -6,17 +6,32 @@ use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 const URL: &str = "https://www.optifine.net/downloads";
+const DATA_FILE: &str = "has_optifine_updated.txt";
 
 #[tokio::main]
 async fn main() {
+    // Get a config file
+    let mut config_file = dirs::data_local_dir().unwrap_or(".".into());
+    config_file.push(DATA_FILE);
+
     // Fetch web and data at the same time
-    let (response, cached_data) = tokio::join!(fetch_url(URL), load_cached_data("Cargo.toml"));
+    let (response, cached_data) = tokio::join!(fetch_url(URL), load_cached_data(&config_file));
 
     // Extract the version string "Minecraft 1.xx.xx"
     let version = extract_version(&response).expect("Couldn't parse HTML");
 
+    // Print cached data
+    match cached_data {
+        Some(cached_version) => eprintln!("Old version: {cached_version}"),
+        None => eprintln!("Couldn't load old version")
+    }
+
     println!("Current OptiFine version: {version}");
-    println!("Data: {}", cached_data.unwrap());
+
+    // Store new data
+    if let Err(_) = store_data(&version, config_file).await {
+        eprintln!("Couldn't cache data!");
+    }
 }
 
 async fn fetch_url(url: &str) -> String {
