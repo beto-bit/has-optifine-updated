@@ -24,8 +24,8 @@ async fn main() {
     if let Some(cached_version) = cached_data {
         if cached_version != version {
             println!("Version Changed!");
+            println!("Old version: {cached_version}");
         }
-        println!("Old version: {cached_version}");
     } else {
         eprintln!("Couldn't load cached version");
     }
