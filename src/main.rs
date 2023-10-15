@@ -21,15 +21,19 @@ async fn main() {
     let version = extract_version(&response).expect("Couldn't parse HTML");
 
     // Print cached data
-    match cached_data {
-        Some(cached_version) => eprintln!("Old version: {cached_version}"),
-        None => eprintln!("Couldn't load old version")
+    if let Some(cached_version) = cached_data {
+        if cached_version != version {
+            println!("Version Changed!");
+        }
+        println!("Old version: {cached_version}");
+    } else {
+        eprintln!("Couldn't load cached version");
     }
 
     println!("Current OptiFine version: {version}");
 
     // Store new data
-    if let Err(_) = store_data(&version, config_file).await {
+    if store_data(&version, config_file).await.is_err() {
         eprintln!("Couldn't cache data!");
     }
 }
